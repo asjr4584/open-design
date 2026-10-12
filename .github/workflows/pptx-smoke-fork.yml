@@ -1,0 +1,47 @@
+name: Fork PPTX CI Smoke
+
+# Intentionally isolated from the upstream PR/release workflows.
+# Run only on this test branch; never publish, deploy, or use billable AI.
+on:
+  push:
+    branches:
+      - test/pptx-ci-20261013
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pptx-export-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Checkout fork branch
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+      - name: Install Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - name: Install locked workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build daemon dependency workspace
+        run: pnpm --filter '@open-design/daemon^...' --workspace-concurrency=2 --if-present run build
+      - name: Exercise existing screenshot PPTX/OOXML unit tests
+        run: pnpm --filter @open-design/daemon exec vitest run -c vitest.config.ts tests/deck-export.test.ts
+      - name: Exercise existing editable-export and CJK tests (mock-based)
+        run: pnpm --filter @open-design/desktop exec vitest run -c vitest.config.ts tests/main/pptx-editable-fidelity.test.ts tests/main/pptx-cjk-typeface.test.ts
+      - name: Generate real Open Design PPTX fixture and verify OOXML
+        run: pnpm --filter @open-design/daemon exec tsx scripts/pptx-smoke.ts
+      - name: Retain PPTX files, slide images and verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-design-pptx-smoke
+          path: test-artifacts/pptx-smoke/
+          if-no-files-found: warn
+          retention-days: 7
