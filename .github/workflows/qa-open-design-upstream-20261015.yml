@@ -1,0 +1,84 @@
+name: QA - Open Design upstream parity and PPTX (fork)
+
+on:
+  push:
+    branches:
+      - 'qa/open-design-upstream-20261015'
+
+permissions:
+  contents: read
+
+jobs:
+  motion-blueprints:
+    name: Validate all 115 motion blueprints
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate motion files and identifiers
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { readdirSync, readFileSync, existsSync } from 'node:fs';
+          import { join } from 'node:path';
+          const root = 'design-templates';
+          const templates = readdirSync(root, {withFileTypes:true}).filter(x => x.isDirectory()).map(x=>x.name);
+          let ok = 0;
+          const errors = [];
+          for (const id of templates) {
+            const base=join(root,id);
+            const md=join(base,'MOTION.md');
+            const json=join(base,'motion-blueprint.json');
+            if (!existsSync(md) || !existsSync(json)) {
+              errors.push(`${id}: missing MOTION.md or motion-blueprint.json`);
+              continue;
+            }
+            try {
+              const data=JSON.parse(readFileSync(json,'utf8'));
+              if (data.schemaVersion !== 1 || data.templateId !== id ||
+                  !data.remotion || !data.hyperframes || !Array.isArray(data.layouts) ||
+                  data.layouts.length === 0) {
+                errors.push(`${id}: invalid blueprint contract`);
+              } else if (readFileSync(md,'utf8').trim().length < 100) {
+                errors.push(`${id}: empty or trivial Markdown guide`);
+              } else ok++;
+            } catch (err) {errors.push(`${id}: ${err.message}`)}
+          }
+          console.log(JSON.stringify({total:templates.length,valid:ok,invalid:errors.length,errors},null,2));
+          if (templates.length !== 115 || errors.length > 0) process.exitCode=1;
+          NODE
+
+  pptx-smoke:
+    name: Open Design PPTX OOXML and editable/CJK tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - name: Install workspace from lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Build daemon dependencies
+        run: pnpm --filter '@open-design/daemon^...' --workspace-concurrency=2 --if-present run build
+      - name: Screenshot PPTX and OOXML unit tests
+        run: pnpm --filter @open-design/daemon exec vitest run -c vitest.config.ts tests/deck-export.test.ts
+      - name: Editable and Japanese/CJK font fidelity tests
+        run: pnpm --filter @open-design/desktop exec vitest run -c vitest.config.ts tests/main/pptx-editable-fidelity.test.ts tests/main/pptx-cjk-typeface.test.ts
+      - name: Produce and inspect PPTX smoke artifact
+        run: pnpm --filter @open-design/daemon exec tsx scripts/pptx-smoke.ts
+      - name: Save PPTX output and report (no deployment)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fork-open-design-pptx-qa-20261015
+          path: test-artifacts/pptx-smoke/
+          if-no-files-found: warn
+          retention-days: 7
