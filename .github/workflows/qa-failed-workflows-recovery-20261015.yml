@@ -1,0 +1,161 @@
+name: QA - Reproduce failed Open Design workflows safely (fork)
+
+on:
+  push:
+    branches:
+      - 'qa/failed-workflows-recovery-20261015'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: open-design-recovery-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  critique-conformance:
+    name: Fix/replay critique-conformance fixture
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @open-design/daemon build
+      - name: Exercise existing synthetic-good/bad conformance harness
+        env:
+          OD_DATA_DIR: ${{ runner.temp }}/od-qa
+        run: |
+          node --import tsx apps/daemon/src/critique/__fixtures__/run-prerelease.ts
+          node --input-type=module <<'NODE'
+          import { existsSync, readdirSync, readFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const root=join(process.env.OD_DATA_DIR,'conformance');
+          for (const adapter of ['synthetic-good','synthetic-bad']) {
+            const folder=join(root,adapter);
+            if (!existsSync(folder)) throw new Error(`Missing conformance history for ${adapter}`);
+            const files=readdirSync(folder).filter(x=>x.endsWith('.jsonl'));
+            if (!files.length) throw new Error(`Missing rows for ${adapter}`);
+            const row=JSON.parse(readFileSync(join(folder,files[0]),'utf8').trim().split('\n').at(-1));
+            if (row.adapter!==adapter || row.totalRuns!==1) throw new Error(`Bad ${adapter} snapshot`);
+            console.log(`${adapter}: ${JSON.stringify(row)}`);
+          }
+          NODE
+      - name: Retain synthetic adapter history
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fork-conformance-qa
+          path: ${{ runner.temp }}/od-qa/conformance/
+          if-no-files-found: warn
+          retention-days: 7
+
+  whats-new-validation:
+    name: Validate Whats New content and publishing safety gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate shipping parser and document schema
+        run: pnpm exec tsx scripts/check-whats-new-document.ts
+      - name: Run publisher read-back self-check (no storage writes)
+        run: python3 .github/scripts/publish_whats_new.py self-check
+      - name: Verify original workflow rejects unauthorized fork publish
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          script=Path('.github/workflows/whats-new-publish.yml').read_text()
+          assert 'nexu-io/open-design' in script, 'expected original allowlist gate missing'
+          assert 'if [ "$REPOSITORY" != "nexu-io/open-design" ]' in script
+          print('Publisher allowlist preserved; no release or R2 write attempted')
+          PY
+
+  plugin-preview-gc:
+    name: Validate preview GC safety with synthetic objects only
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test orphan selection, grace period and protected manifest keys
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {keysFromManifest,protectedKeys,selectOrphans} from './scripts/plugin-previews-gc.mjs';
+          const x={previews:{a:{video:'a/clip.mp4',poster:'a/poster.png'}}};
+          assert.deepEqual(keysFromManifest(x),['a/clip.mp4','a/poster.png']);
+          const set=protectedKeys([x,{previews:{b:{video:'b/clip.mp4'}}}]);
+          assert.equal(set.size,3);
+          const now=Date.parse('2026-10-15T00:00:00Z');
+          const days=n=>n*86400000;
+          const objects=[
+            {key:'a/clip.mp4',lastModifiedMs:now-days(200)},
+            {key:'old/orphan.mp4',lastModifiedMs:now-days(200)},
+            {key:'new/orphan.mp4',lastModifiedMs:now-days(5)}
+          ];
+          assert.deepEqual(selectOrphans(objects,set,{nowMs:now,graceDays:90}),['old/orphan.mp4']);
+          assert.deepEqual(selectOrphans(objects,set,{nowMs:now,graceDays:250}),[]);
+          console.log('Protected references, age threshold, and orphan selection PASS; no AWS or deletion invoked');
+          NODE
+      - name: Confirm delete remains double-gated
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const src=readFileSync('scripts/plugin-previews-gc.mjs','utf8');
+          assert(src.includes("args.delete && process.env.GC_ENABLE_DELETE === '1'"));
+          assert(src.includes('protectedSet.size === 0'));
+          assert(src.includes("manifestAtRef('origin/main')"));
+          console.log('GC delete arming and fail-closed protected-set checks present');
+          NODE
+
+  plugin-preview-bake:
+    name: Offline preview bake without R2 publishing
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
+      - name: Bake preview media locally (upload disabled)
+        uses: ./.github/actions/bake-previews
+        with:
+          upload: 'false'
+          strict: 'false'
+      - name: Compare generated and committed manifest
+        run: |
+          node scripts/plugin-previews-diff.mjs data/plugin-previews/manifest.json .tmp/plugin-previews/manifest.json
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          const report=JSON.parse(readFileSync('.tmp/plugin-previews/bake-report.json','utf8'));
+          console.log('Offline bake report: '+JSON.stringify(report).slice(0,14000));
+          NODE
+      - name: Upload generated QA manifest/report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fork-bake-preview-qa
+          path: |
+            .tmp/plugin-previews/manifest.json
+            .tmp/plugin-previews/bake-report.json
+          if-no-files-found: warn
+          retention-days: 7
+
+# All jobs above use read-only GitHub permissions; no R2 secrets, uploads,
+# publishes, branch pushes, garbage-collection deletions or production actions.
