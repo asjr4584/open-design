@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 1,
+  "templateId": "html-ppt-knowledge-arch-blueprint",
+  "name": "HTML-PPT Studio: Knowledge Arch Blueprint",
+  "category": "core-deck",
+  "mode": "deck",
+  "engine": "HTML-PPT Studio (Lewislulu)",
+  "defaultPreset": "theme-tech-blue",
+  "recommendedPresets": [
+    "theme-tech-blue",
+    "theme-terminal-green",
+    "ikb",
+    "slate-mono"
+  ],
+  "totalLayouts": 8,
+  "instructionFiles": {
+    "markdownPath": "C:\\src\\open-design\\design-templates\\html-ppt-knowledge-arch-blueprint\\MOTION.md",
+    "jsonPath": "C:\\src\\open-design\\design-templates\\html-ppt-knowledge-arch-blueprint\\motion-blueprint.json",
+    "remotionConfigPath": "C:\\src\\ai-browser-recorder\\remotion\\remotion.config.ts",
+    "hyperframesSkillPath": "C:\\src\\ai-browser-recorder\\.agents\\skills\\hyperframes\\SKILL.md"
+  },
+  "domSelectors": {
+    "slide": ".slide, section.slide, .slide, [data-deck-slide]",
+    "kicker": ".kicker, .eyebrow, .synth-kicker",
+    "headline": "h1, h2, .title",
+    "subtitle": ".lede, .subtitle, p",
+    "cards": ".card, .synth-card, [class*=\"card\"]",
+    "stats": ".stat-value, [class*=\"stat\"], [class*=\"big\"]",
+    "codeAndData": "pre, code, table, svg, canvas",
+    "badges": ".badge, .tag, .synth-badge",
+    "chrome": ".topbar, .botbar, .slide-footer-bar"
+  },
+  "pptxToVideoPipeline": {
+    "hybridPptxEndpoint": "POST http://127.0.0.1:8765/v1/open-design/export-pptx",
+    "deckGenerateJobType": "generate_design_deck",
+    "stage9ApproveEndpoint": "POST http://127.0.0.1:8765/v1/projects/:projectId/decks/:deckId/approve",
+    "stage11ImportEndpoint": "POST http://127.0.0.1:8765/v1/projects/:projectId/decks/:deckId/import",
+    "stage12ExportEndpoint": "POST http://127.0.0.1:8765/v1/projects/:projectId/decks/:deckId/export",
+    "architecture": "A1 Hybrid 16:9 Visual Master PNG background + A2 Native Editable OOXML text/card overlays + AI Explainer Speaker Notes",
+    "authoritativePngSyncRule": "Use work/design/decks/<deckId>/slides/Slide1.PNG..SlideN.PNG sorted numerically (Slide10.PNG after Slide9.PNG); never extract frames from MP4 or use FFmpeg zoompan."
+  },
+  "remotion": {
+    "skillCommand": "/remotion",
+    "configPath": "C:\\src\\ai-browser-recorder\\remotion\\remotion.config.ts",
+    "openGlRenderer": "angle",
+    "hardwareAcceleration": "required",
+    "prohibited": [
+      "CPU libx264 fallback",
+      "SwiftShader in production",
+      "FFmpeg zoompan"
+    ],
+    "renderCommand": "npx remotion render remotion/src/index.ts EysiInspiredSequence exports/html-ppt-knowledge-arch-blueprint_remotion_1080p.mp4 --gl=angle --hardware-acceleration=required --public-dir=remotion/public",
+    "compositions": [
+      "EysiInspiredSequence",
+      "PptxParallaxIntro",
+      "ParallaxDepthSandwich",
+      "Screencast"
+    ],
+    "planes": {
+      "backgroundPlane": {
+        "component": "EnvironmentalBackground",
+        "baseZoom": 1.35,
+        "overscanScale": 2.2,
+        "containerInsetPx": -500,
+        "blackEdgeVoidPx": 0,
+        "vibrancy": 1
+      },
+      "viewportVignette": {
+        "zIndex": 5,
+        "inset": 0,
+        "pointerEvents": "none",
+        "anchoredToRootViewport": true
+      },
+      "midgroundCards": {
+        "selectors": ".card, .synth-card, [class*=\"card\"]",
+        "spring": {
+          "damping": 18,
+          "stiffness": 120,
+          "mass": 0.9
+        },
+        "staggerFrames": 4,
+        "ambientBoxShadow": "0 32px 80px rgba(0, 0, 0, 0.65)"
+      },
+      "foregroundTypographyAndBadges": {
+        "headlineSelectors": "h1, h2, .title",
+        "kickerSelectors": ".kicker, .eyebrow, .synth-kicker",
+        "badgeSelectors": ".badge, .tag, .synth-badge",
+        "chapterTitlePt": 120,
+        "slideHeadlinePt": 96,
+        "subheadPt": 48,
+        "captionPt": 38,
+        "statCalloutPt": 150,
+        "dropShadowPasses": 3,
+        "acousticKaraokeSync": true
+      }
+    },
+    "kinematicLifecycle": [
+      {
+        "phase": 1,
+        "name": "Spring Entrance",
+        "frames": "0..18",
+        "rule": "Translate card stage from -280px -> 0px with spring(damping: 18, stiffness: 120, mass: 0.9)"
+      },
+      {
+        "phase": 2,
+        "name": "Sub-Pixel Bezier Drift",
+        "frames": "18..duration-36",
+        "rule": "Continuous ~42px camera drift inside 1,152px overscan bleed margin (0px black edge)"
+      },
+      {
+        "phase": 3,
+        "name": "Focal ROI Push-In",
+        "frames": "Narration emphasis cue",
+        "rule": "1.08x smooth push-in onto active card, stat counter, or code block ROI"
+      },
+      {
+        "phase": 4,
+        "name": "Momentum Exit",
+        "frames": "duration-18..duration",
+        "rule": "Translate card stage to +380px while EnvironmentalBackground and root vignette stay anchored"
+      }
+    ]
+  },
+  "hyperframes": {
+    "skillCommand": "/hyperframes",
+    "engineRoot": "C:\\src\\hyperframes",
+    "cliVersion": "0.8.149+",
+    "compositionAttributes": {
+      "data-hyperframes-composition": "html-ppt-knowledge-arch-blueprint",
+      "data-width": 1920,
+      "data-height": 1080,
+      "data-fps": 30,
+      "data-duration": 6
+    },
+    "gsapRegistrationSnippet": "window.__timelines = window.__timelines || [];\nconst tl = gsap.timeline({ paused: true });\ntl.from(\".kicker, .eyebrow, .synth-kicker\", { y: 16, opacity: 0, duration: 0.35, ease: \"power3.out\" }, 0)\n  .from(\"h1, h2, .title\", { y: 32, scale: 0.96, opacity: 0, duration: 0.5, ease: \"back.out(1.4)\" }, 0.1)\n  .from(\".card, .synth-card, [class*=\\\"card\\\"]\", { y: 36, opacity: 0, stagger: 0.1, duration: 0.45, ease: \"power2.out\" }, 0.22)\n  .from(\".stat-value, [class*=\\\"stat\\\"], [class*=\\\"big\\\"]\", { scale: 0.82, opacity: 0, stagger: 0.12, duration: 0.5, ease: \"back.out(1.6)\" }, 0.3)\n  .from(\"pre, code, table, svg, canvas\", { y: 20, opacity: 0, duration: 0.45, ease: \"power2.out\" }, 0.34)\n  .from(\".badge, .tag, .synth-badge\", { scale: 0.85, opacity: 0, stagger: 0.06, duration: 0.3 }, 0.42);\nwindow.__timelines.push(tl);",
+    "cliCommands": {
+      "check": "npx hyperframes check",
+      "lint": "npx hyperframes lint",
+      "preview": "npx hyperframes preview index.html",
+      "render": "npx hyperframes render work/design/decks/<deckId>/index.html -o exports/html-ppt-knowledge-arch-blueprint_hyperframes_1080p.mp4 --fps=30"
+    }
+  },
+  "layouts": [
+    {
+      "index": 1,
+      "layoutId": "cover",
+      "name": "01 · Tech Topic Title",
+      "archetype": "cover",
+      "remotionComposition": "PptxParallaxIntro",
+      "cameraMotion": "1.35x decoupled background plate + 6% slow Z-axis push-in over slide duration; fixed root vignette (zIndex: 5)",
+      "elementChoreography": {
+        "kicker": "Frames 0..12: spring slide-up + opacity 0->1 on (.kicker, .eyebrow, .synth-kicker)",
+        "headline": "Frames 6..22: 110-120pt hero spring entrance (damping: 18, stiffness: 120) + double-pass dark drop shadow on (h1, h2, .title)",
+        "subtitle": "Frames 14..28: smooth fade-up + acoustic karaoke word-highlight tracking on (.lede, .subtitle, p)",
+        "badges": "Frames 20..36: 4-frame staggered pop-in with triple-pass physical drop-shadow on (.badge, .tag, .synth-badge)"
+      },
+      "hyperframesGsap": "tl.from(\".kicker, .eyebrow, .synth-kicker\", { y: 18, opacity: 0, duration: 0.35, ease: \"power3.out\" }, 0).from(\"h1, h2, .title\", { y: 36, scale: 0.94, opacity: 0, duration: 0.55, ease: \"back.out(1.4)\" }, 0.12).from(\".lede, .subtitle, p\", { y: 20, opacity: 0, duration: 0.45 }, 0.28).from(\".badge, .tag, .synth-badge\", { scale: 0.85, opacity: 0, stagger: 0.08, duration: 0.35 }, 0.42);",
+      "transitionOut": "Momentum slide exit (+380px) with 12-frame crossfade"
+    },
+    {
+      "index": 2,
+      "layoutId": "background",
+      "name": "02 · Agenda Roadmap",
+      "archetype": "process",
+      "remotionComposition": "ParallaxDepthSandwich",
+      "cameraMotion": "4-phase kinematic lifecycle: spring entrance (-280px -> 0), bezier drift (+42px), 1.06x card ROI focus, momentum exit (+380px)",
+      "elementChoreography": {
+        "kicker": "Frames 0..12: eyebrow tag reveal on (.kicker, .eyebrow, .synth-kicker)",
+        "headline": "Frames 4..18: 96pt headline spring entrance on (h1, h2, .title)",
+        "cards": "Frames 10..36: multi-column card stagger (4 frames per card) with active-card border highlight on (.card, .synth-card, [class*=\"card\"])",
+        "subtitle": "Continuous: acoustic word-by-word karaoke highlight striking on (.lede, .subtitle, p)"
+      },
+      "hyperframesGsap": "tl.from(\".kicker, .eyebrow, .synth-kicker\", { y: 14, opacity: 0, duration: 0.3 }, 0).from(\"h1, h2, .title\", { y: 28, opacity: 0, duration: 0.45, ease: \"power3.out\" }, 0.1).from(\".card, .synth-card, [class*=\"card\"]\", { y: 36, opacity: 0, stagger: 0.1, duration: 0.45, ease: \"power2.out\" }, 0.22);",
+      "transitionOut": "Momentum exit (+380px) with anchored background plate"
+    },
+    {
+      "index": 3,
+      "layoutId": "architecture",
+      "name": "03 · System Context",
+      "archetype": "three-column",
+      "remotionComposition": "ParallaxDepthSandwich",
+      "cameraMotion": "4-phase kinematic lifecycle: spring entrance (-280px -> 0), bezier drift (+42px), 1.06x card ROI focus, momentum exit (+380px)",
+      "elementChoreography": {
+        "kicker": "Frames 0..12: eyebrow tag reveal on (.kicker, .eyebrow, .synth-kicker)",
+        "headline": "Frames 4..18: 96pt headline spring entrance on (h1, h2, .title)",
+        "cards": "Frames 10..36: multi-column card stagger (4 frames per card) with active-card border highlight on (.card, .synth-card, [class*=\"card\"])",
+        "subtitle": "Continuous: acoustic word-by-word karaoke highlight striking on (.lede, .subtitle, p)"
+      },
+      "hyperframesGsap": "tl.from(\".kicker, .eyebrow, .synth-kicker\", { y: 14, opacity: 0, duration: 0.3 }, 0).from(\"h1, h2, .title\", { y: 28, opacity: 0, duration: 0.45, ease: \"power3.out\" }, 0.1).from(\".card, .synth-card, [class*=\"card\"]\", { y: 36, opacity: 0, stagger: 0.1, duration: 0.45, ease: \"power2.out\" }, 0.22);",
+      "transitionOut": "Momentum exit (+380px) with anchored background plate"
+    },
+    {
+      "index": 4,
+      "layoutId": "deep-dive",
+      "name": "04 · Deep Dive 1: Future",
+      "archetype": "two-column",
+      "remotionComposition": "ParallaxDepthSandwich",
+      "cameraMotion": "4-phase kinematic lifecycle: spring entrance (-280px -> 0), bezier drift (+42px), 1.06x card ROI focus, momentum exit (+380px)",
+      "elementChoreography": {
+        "kicker": "Frames 0..12: eyebrow tag reveal on (.kicker, .eyebrow, .synth-kicker)",
+        "headline": "Frames 4..18: 96pt headline spring entrance on (h1, h2, .title)",
+        "cards": "Frames 10..36: multi-column card stagger (4 frames per card) with active-card border highlight on (.card, .synth-card, [class*=\"card\"])",
+        "subtitle": "Continuous: acoustic word-by-word karaoke highlight striking on (.lede, .subtitle, p)"
+      },
+      "hyperframesGsap": "tl.from(\".kicker, .eyebrow, .synth-kicker\", { y: 14, opacity: 0, duration: 0.3 }, 0).from(\"h1, h2, .title\", { y: 28, opacity: 0, duration: 0.45, ease: \"power3.out\" }, 0.1).from(\".card, .synth-card, [class*=\"card\"]\", { y: 36, opacity: 0, stagger: 0.1, duration: 0.45, ease: \"power2.out\" }, 0.22);",
+      "transitionOut": "Momentum exit (+380px) with anchored background plate"
+    },
+    {
+      "index": 5,
+      "layoutId": "code",
+      "name": "05 · Deep Dive 2: Tokio",
+      "archetype": "two-column",
+      "remotionComposition": "ParallaxDepthSandwich",
+      "cameraMotion": "4-phase kinematic lifecycle: spring entrance (-280px -> 0), bezier drift (+42px), 1.06x card ROI focus, momentum exit (+380px)",
+      "elementChoreography": {
+        "kicker": "Frames 0..12: eyebrow tag reveal on (.kicker, .eyebrow, .synth-kicker)",
+        "headline": "Frames 4..18: 96pt headline spring entrance on (h1, h2, .title)",
+        "cards": "Frames 10..36: multi-column card stagger (4 frames per card) with active-card border highlight on (.card, .synth-card, [class*=\"card\"])",
+        "subtitle": "Continuous: acoustic word-by-word karaoke highlight striking on (.lede, .subtitle, p)"
+      },
+      "hyperframesGsap": "tl.from(\".kicker, .eyebrow, .synth-kicker\", { y: 14, opacity: 0, duration: 0.3 }, 0).from(\"h1, h2, .title\", { y: 28, opacity: 0, duration: 0.45, ease: \"power3.out\" }, 0.1).from(\".card, .synth-card, [class*=\"card\"]\", { y: 36, opacity: 0, stagger: 0.1, duration: 0.45, ease: \"power2.out\" }, 0.22);",
+      "transitionOut": "Momentum exit (+380px) with anchored background plate"
+    },
+    {
+      "index": 6,
+      "layoutId": "benchmarks",
+      "name": "06 · Mini Runtime Code",
+      "archetype": "code",
+      "remotionComposition": "Screencast",
+      "cameraMotion": "Rack-focus zoom (1.0x -> 1.12x) locking onto active code block / diff line / table row synced to spoken technical token",
+      "elementChoreography": {
+        "headline": "Frames 0..14: crisp monospace/display header reveal on (h1, h2, .title)",
+        "codeAndData": "Frames 8..42: line-by-line typewriter / row highlight sweep across (pre, code, table, svg, canvas)",
+        "cards": "Frames 12..30: terminal pane border glow + callout badge pop on (.card, .synth-card, [class*=\"card\"])"
+      },
+      "hyperframesGsap": "tl.from(\"h1, h2, .title\", { x: -24, opacity: 0, duration: 0.35 }, 0).from(\"pre, code, table, svg, canvas\", { y: 20, opacity: 0, duration: 0.45, ease: \"power2.out\" }, 0.15).from(\".card, .synth-card, [class*=\"card\"]\", { opacity: 0, y: 16, stagger: 0.08, duration: 0.35 }, 0.28);",
+      "transitionOut": "Crisp 10-frame cut/crossfade preserving code legibility"
+    },
+    {
+      "index": 7,
+      "layoutId": "tradeoffs",
+      "name": "07 · Core Takeaways",
+      "archetype": "three-column",
+      "remotionComposition": "ParallaxDepthSandwich",
+      "cameraMotion": "4-phase kinematic lifecycle: spring entrance (-280px -> 0), bezier drift (+42px), 1.06x card ROI focus, momentum exit (+380px)",
+      "elementChoreography": {
+        "kicker": "Frames 0..12: eyebrow tag reveal on (.kicker, .eyebrow, .synth-kicker)",
+        "headline": "Frames 4..18: 96pt headline spring entrance on (h1, h2, .title)",
+        "cards": "Frames 10..36: multi-column card stagger (4 frames per card) with active-card border highlight on (.card, .synth-card, [class*=\"card\"])",
+        "subtitle": "Continuous: acoustic word-by-word karaoke highlight striking on (.lede, .subtitle, p)"
+      },
+      "hyperframesGsap": "tl.from(\".kicker, .eyebrow, .synth-kicker\", { y: 14, opacity: 0, duration: 0.3 }, 0).from(\"h1, h2, .title\", { y: 28, opacity: 0, duration: 0.45, ease: \"power3.out\" }, 0.1).from(\".card, .synth-card, [class*=\"card\"]\", { y: 36, opacity: 0, stagger: 0.1, duration: 0.45, ease: \"power2.out\" }, 0.22);",
+      "transitionOut": "Momentum exit (+380px) with anchored background plate"
+    },
+    {
+      "index": 8,
+      "layoutId": "takeaways",
+      "name": "08 · Questions & Q&A",
+      "archetype": "closing",
+      "remotionComposition": "ParallaxDepthSandwich",
+      "cameraMotion": "4-phase kinematic lifecycle: spring entrance (-280px -> 0), bezier drift (+42px), 1.06x card ROI focus, momentum exit (+380px)",
+      "elementChoreography": {
+        "kicker": "Frames 0..12: eyebrow tag reveal on (.kicker, .eyebrow, .synth-kicker)",
+        "headline": "Frames 4..18: 96pt headline spring entrance on (h1, h2, .title)",
+        "cards": "Frames 10..36: multi-column card stagger (4 frames per card) with active-card border highlight on (.card, .synth-card, [class*=\"card\"])",
+        "subtitle": "Continuous: acoustic word-by-word karaoke highlight striking on (.lede, .subtitle, p)"
+      },
+      "hyperframesGsap": "tl.from(\".kicker, .eyebrow, .synth-kicker\", { y: 14, opacity: 0, duration: 0.3 }, 0).from(\"h1, h2, .title\", { y: 28, opacity: 0, duration: 0.45, ease: \"power3.out\" }, 0.1).from(\".card, .synth-card, [class*=\"card\"]\", { y: 36, opacity: 0, stagger: 0.1, duration: 0.45, ease: \"power2.out\" }, 0.22);",
+      "transitionOut": "Momentum exit (+380px) with anchored background plate"
+    }
+  ]
+}
